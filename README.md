@@ -786,6 +786,20 @@ flowchart TD
     class report success
 ```
 
+### Các ô vuông trong vòng sửa lỗi làm gì?
+
+| Ô trong sơ đồ | Hermes thực hiện như thế nào |
+| --- | --- |
+| `Đọc cấu trúc repo` | Xem project có những thư mục/file nào, đâu là backend, frontend, test, config. Mục tiêu là biết nên nhìn vào đâu trước. |
+| `Chạy app, test hoặc build` | Dùng terminal chạy lệnh thật như `npm run build`, `pytest`, `uvicorn`, hoặc lệnh trong `AGENTS.md`. Không đoán lỗi khi chưa chạy. |
+| `Terminal trả error log` | Lấy thông báo lỗi từ terminal: tên lỗi, file lỗi, dòng lỗi, stack trace, test nào fail. |
+| `Hermes phân tích lỗi` | Dịch error log thành nguyên nhân có thể xảy ra, ví dụ thiếu import, sai schema, thiếu biến môi trường, sai type hoặc thiếu package. |
+| `Đọc file liên quan` | Mở đúng file bị nhắc trong log và các file liên quan như test, model, schema, config. Không sửa khi chưa đọc code thật. |
+| `Sửa code` | Patch nhỏ đúng chỗ gây lỗi, tránh rewrite nhiều file. Nếu lỗi do config thì sửa config hoặc thêm hướng dẫn chạy. |
+| `Chạy lại test hoặc build` | Kiểm chứng lại bằng lệnh thật. Nếu còn lỗi thì quay lại đọc log mới; nếu hết lỗi thì báo cáo kết quả. |
+
+Nói đơn giản: Hermes không sửa theo cảm tính. Nó luôn đi theo vòng `chạy thật -> đọc lỗi thật -> đọc code thật -> sửa nhỏ -> chạy lại`.
+
 ### Bốn nguồn thông tin Hermes dùng khi sửa lỗi
 
 | Nguồn | Tác dụng |
