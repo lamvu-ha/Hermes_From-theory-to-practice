@@ -564,6 +564,18 @@ flowchart TD
     class finish success
 ```
 
+### Giải thích quy trình gỡ lỗi trong ví dụ
+
+Điểm khác biệt của Hermes so với chatbot thông thường nằm ở chỗ nó không chỉ nói "có thể lỗi do X". Khi người dùng giao việc như "Hãy kiểm tra xem vì sao một test case của dự án đang bị lỗi", Hermes chạy như một tác nhân bền bỉ qua ba giai đoạn:
+
+| Giai đoạn | Hermes làm gì | Ý nghĩa |
+| --- | --- | --- |
+| **1. Chuẩn bị ngữ cảnh trước vòng lặp** | Load `SOUL.md` để biết nguyên tắc làm việc cẩn thận; đọc `AGENTS.md` để biết luật repo; xem compact memory để nhớ dự án dùng `pnpm` hay `npm`, lệnh test là gì, lỗi cũ từng gặp ra sao | Agent không cần hỏi lại các thông tin dự án đã biết và bắt đầu với đúng bối cảnh |
+| **2. Tương tác thực tế trong vòng lặp** | Dùng terminal chạy test, đọc error log, mở đúng file liên quan, sửa code, chạy lại test/build, rồi lặp cho đến khi hết lỗi hoặc gặp rào cản cần hỏi người dùng | Agent kiểm chứng bằng phản hồi thật từ môi trường thay vì đoán lý thuyết |
+| **3. Tự học sau nhiệm vụ** | Nếu phát hiện bài học có giá trị như Docker container bị treo, thiếu biến môi trường riêng của dự án, hoặc lệnh test cần flag đặc biệt, Hermes lưu vào `MEMORY.md` hoặc tạo draft `SKILL.md` | Lần sau gặp lỗi tương tự, agent có thể đề xuất hướng xử lý từ kinh nghiệm cũ thay vì mò lại từ đầu |
+
+Ví dụ, nếu test fail vì thiếu biến môi trường `DATABASE_URL`, một chatbot thường chỉ gợi ý chung chung rằng "hãy kiểm tra env". Hermes có thể đọc log, mở file config, phát hiện biến thiếu, thêm `.env.example` hoặc hướng dẫn chạy đúng lệnh, chạy lại test để xác nhận, rồi ghi nhớ rằng repo này cần `DATABASE_URL` trước khi test backend. Đây là learning loop thực tế: chuẩn bị ngữ cảnh, hành động trong môi trường thật, kiểm chứng kết quả, rồi lưu bài học có chọn lọc.
+
 ### Kết quả dự án có thể tạo ra
 
 ```text
