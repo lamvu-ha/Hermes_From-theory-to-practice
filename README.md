@@ -953,6 +953,8 @@ Nói ngắn gọn:
 
 ## 🎬 Video minh họa
 
-GitHub README có thể không phát video trực tiếp bằng thẻ `<video>`. Bấm vào link dưới đây để xem hoặc tải video:
+GitHub README có thể không phát video trực tiếp bằng thẻ `<video>`. Bấm vào link dưới đây để mở trang xem video ngay trên GitHub:
 
-[▶ Xem video minh họa](./1783467104781_194601495714093349_803269642946430643.mp4)
+[▶ Xem video minh họa trên GitHub](https://github.com/lamvu-ha/Hermes_From-theory-to-practice/blob/main/1783467104781_194601495714093349_803269642946430643.mp4)
+
+https://github.com/lamvu-ha/Hermes_From-theory-to-practice/blob/main/1783467104781_194601495714093349_803269642946430643.mp4
