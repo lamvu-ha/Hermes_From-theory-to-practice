@@ -615,8 +615,10 @@ flowchart TB
     end
 
     task -->|bắt đầu phiên| c1
-    c4 -->|đủ ngữ cảnh| r1
-    r3 -->|có checklist| b1
+    task -->|bắt đầu phiên| r1
+    c4 -->|đủ ngữ cảnh| ready{Sẵn sàng triển khai?}
+    r3 -->|có checklist| ready
+    ready -->|đã có luật + kế hoạch| b1
     b4 -->|sau mỗi cụm thay đổi| v1
     v4 -->|Không lỗi| l1
     v4 -->|Có lỗi| d1
@@ -627,16 +629,16 @@ flowchart TB
     classDef success fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
     classDef stage fill:#f8fafc,stroke:#64748b,stroke-width:2px,color:#0f172a
 
-    class v4,l3 decision
+    class ready,v4,l3 decision
     class c1,c2,c3,c4,r1,r2,r3,b1,b2,b3,b4,v1,v2,v3,d1,d2,d3,d4,l1,l2,l4 process
     class task,l5 success
 ```
 
 ### Cách đọc các ô và thanh nối trong luồng
 
-Mỗi khung lớn là một giai đoạn của workflow, được xếp theo đường chính từ trên xuống dưới để sơ đồ dễ đọc hơn trên GitHub. Các ô nhỏ bên trong khung là quá trình thực thi cụ thể mà Hermes làm trong giai đoạn đó. Ví dụ, `Chuẩn bị ngữ cảnh` không chỉ là đọc một file, mà gồm load `SOUL.md`, đọc `AGENTS.md`, tra compact memory, rồi rút ra stack, lệnh test và vùng cấm.
+Mỗi khung lớn là một giai đoạn của workflow. Hai khung đầu có thể đặt ngang hàng vì Hermes vừa chuẩn bị ngữ cảnh, vừa đọc repo/lập kế hoạch trước khi hội tụ ở bước `Sẵn sàng triển khai?`. Các ô nhỏ bên trong khung là quá trình thực thi cụ thể mà Hermes làm trong giai đoạn đó. Ví dụ, `Chuẩn bị ngữ cảnh` không chỉ là đọc một file, mà gồm load `SOUL.md`, đọc `AGENTS.md`, tra compact memory, rồi rút ra stack, lệnh test và vùng cấm.
 
-Thanh nối giữa các khung cho biết đầu ra của giai đoạn trước trở thành đầu vào của giai đoạn sau. Đường chính là: chuẩn bị ngữ cảnh → hiểu repo → triển khai MVP → kiểm tra → tổng kết. Nhánh `Có lỗi` là nhánh phụ: Hermes rẽ sang debug, sửa đúng file liên quan, rồi quay lại bước kiểm tra để xác nhận. Nhánh `Không lỗi` mới cho phép đi sang tổng kết và học lại.
+Thanh nối giữa các khung cho biết đầu ra của giai đoạn trước trở thành đầu vào của giai đoạn sau. Đường chính là: chuẩn bị ngữ cảnh + hiểu repo/lập kế hoạch → triển khai MVP → kiểm tra → tổng kết. Nhánh `Có lỗi` là nhánh phụ: Hermes rẽ sang debug, sửa đúng file liên quan, rồi quay lại bước kiểm tra để xác nhận. Nhánh `Không lỗi` mới cho phép đi sang tổng kết và học lại.
 
 ### Giải thích quy trình gỡ lỗi trong ví dụ
 
