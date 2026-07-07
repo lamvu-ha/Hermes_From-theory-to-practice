@@ -110,10 +110,43 @@ flowchart TD
 
 Nếu người dùng thường làm backend bằng `FastAPI` và database `SQLite`, Hermes có thể ghi nhớ thông tin đó. Lần sau khi người dùng yêu cầu tạo backend, agent sẽ ưu tiên stack quen thuộc thay vì hỏi lại từ đầu.
 
-| File memory | Nên lưu gì | Ví dụ |
+| File Markdown | Vai trò | Ví dụ |
 | --- | --- | --- |
+| `SOUL.md` | Nhân cách lõi, giọng văn, nguyên tắc ứng xử, giới hạn kỷ luật của agent | "Luôn kiểm tra repo trước khi sửa code" |
 | `MEMORY.md` | Thông tin dự án, lỗi đã gặp, workflow, môi trường | "Project dùng FastAPI + SQLite" |
 | `USER.md` | Sở thích người dùng, cách giao tiếp, format trả lời | "Người dùng thích giải thích tiếng Việt ngắn gọn" |
+
+### Kiến trúc bộ nhớ và prompt: vai trò của `SOUL.md`
+
+Trong kiến trúc thực tế của Hermes Agent, memory không chỉ là việc ghi vài thông tin vào `MEMORY.md` và `USER.md`. Khi agent bắt đầu phiên làm việc, hệ thống xây dựng prompt, thường nằm ở lớp như `prompt_builder.py`, tổng hợp ba trụ cột Markdown cốt lõi:
+
+```mermaid
+flowchart TD
+    accTitle: Hermes Prompt Pillars
+    accDescr: Diagram showing how SOUL.md, MEMORY.md, and USER.md are combined by the prompt builder into the agent system prompt
+
+    soul[SOUL.md<br/>Core persona]
+    memory[MEMORY.md<br/>Environment and project memory]
+    user[USER.md<br/>User profile]
+
+    soul --> builder[prompt_builder.py]
+    memory --> builder
+    user --> builder
+    builder --> system_prompt[System prompt]
+    system_prompt --> agent[Hermes Agent behavior]
+
+    classDef core fill:#fee2e2,stroke:#dc2626,stroke-width:2px,color:#7f1d1d
+    classDef data fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
+    classDef process fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a5f
+
+    class soul core
+    class memory,user data
+    class builder,system_prompt,agent process
+```
+
+`SOUL.md` là phần dễ bị bỏ sót nhưng lại rất quan trọng. Nó định nghĩa "nhân cách" lõi của agent: cách nói, thái độ làm việc, nguyên tắc ứng xử, chuẩn kỷ luật, giới hạn an toàn, và phong cách ra quyết định. Nếu `MEMORY.md` trả lời câu hỏi "agent đang làm việc trong môi trường nào?" và `USER.md` trả lời "agent đang phục vụ ai?", thì `SOUL.md` trả lời "agent là kiểu cộng sự nào?".
+
+Vì vậy, nếu chỉ mô tả `MEMORY.md` và `USER.md`, bức tranh về kiểm soát hành vi dài hạn của Hermes sẽ thiếu một chân kiềng quan trọng. Với từng profile hoặc subagent, `SOUL.md` có thể khác nhau để tạo ra hành vi chuyên biệt: coder agent cần kỷ luật kiểm thử và đọc code trước khi sửa; research agent cần thói quen trích nguồn và phân biệt giả định; personal assistant cần ưu tiên ngữ cảnh người dùng và cách giao tiếp quen thuộc.
 
 ---
 
@@ -691,4 +724,3 @@ Nói ngắn gọn:
 - Chatbot thường: hỏi gì trả lời đó
 - AI Agent nói chung: có thể lập kế hoạch và dùng công cụ
 - Hermes Agent: có memory, skills, tools, cron, gateway, profile và learning loop để làm việc lâu dài
-
