@@ -460,7 +460,7 @@ flowchart TD
 
 ## 🔧 Ví dụ thực tế: dùng Hermes code một MVP nhỏ
 
-Ví dụ trong dữ liệu PDF là một app quản lý chi tiêu cá nhân cho sinh viên Việt Nam. Repo ban đầu có thể như sau:
+Ví dụ một app quản lý chi tiêu cá nhân cho sinh viên Việt Nam. Repo ban đầu có thể như sau:
 
 ```text
 personal-finance-app/
