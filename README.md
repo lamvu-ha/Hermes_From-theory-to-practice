@@ -762,6 +762,7 @@ Nếu build hoặc server lỗi, Hermes đọc error log, tìm file liên quan, 
 Cơ chế sửa lỗi của Hermes dựa trên vòng lặp: chạy thử -> đọc lỗi -> tìm nguyên nhân -> sửa code -> chạy lại.
 
 ```mermaid
+%%{init: {"flowchart": {"nodeSpacing": 28, "rankSpacing": 36}, "themeVariables": {"fontSize": "16px"}}}%%
 flowchart TD
     accTitle: Hermes Debugging Loop
     accDescr: Flow showing each debugging stage and the concrete execution steps inside it
@@ -769,7 +770,7 @@ flowchart TD
     fix_request([👤 Người dùng yêu cầu sửa lỗi])
 
     subgraph repo_context["1. Hiểu chỗ cần nhìn"]
-        direction TB
+        direction LR
         rc1[Xem file tree]
         rc2[Xác định backend, frontend, test, config]
         rc3[Chọn lệnh kiểm tra phù hợp]
@@ -777,7 +778,7 @@ flowchart TD
     end
 
     subgraph reproduce["2. Tái hiện lỗi"]
-        direction TB
+        direction LR
         rp1[Chạy lệnh thật]
         rp2[Thu terminal output]
         rp3[Giữ error log mới nhất]
@@ -785,7 +786,7 @@ flowchart TD
     end
 
     subgraph diagnose["3. Đọc lỗi và khoanh vùng"]
-        direction TB
+        direction LR
         dg1[Tìm tên lỗi]
         dg2[Tìm file và dòng lỗi]
         dg3[Đoán nhóm nguyên nhân]
@@ -793,7 +794,7 @@ flowchart TD
     end
 
     subgraph inspect["4. Đọc code liên quan"]
-        direction TB
+        direction LR
         i1[Mở file bị nhắc trong log]
         i2[Mở test, schema, config liên quan]
         i3[So sánh kỳ vọng với code thật]
@@ -801,7 +802,7 @@ flowchart TD
     end
 
     subgraph patch["5. Sửa nhỏ đúng chỗ"]
-        direction TB
+        direction LR
         p1[Patch file gây lỗi]
         p2[Tránh rewrite lan rộng]
         p3[Lưu thay đổi]
@@ -809,7 +810,7 @@ flowchart TD
     end
 
     subgraph verify_fix["6. Kiểm chứng lại"]
-        direction TB
+        direction LR
         vf1[Chạy lại test hoặc build]
         vf2{Còn lỗi?}
         vf3[✅ Báo cáo đã sửa gì]
