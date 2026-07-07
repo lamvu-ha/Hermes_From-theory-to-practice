@@ -553,22 +553,22 @@ flowchart TD
     accTitle: Hermes Coding Workflow
     accDescr: Flow showing how Hermes reads project rules, inspects the repo, edits files, runs tests or builds, fixes errors, and saves reusable learning when appropriate
 
-    task([👤 Người dùng giao nhiệm vụ]) --> read_rules[Đọc AGENTS.md]
-    read_rules --> inspect_repo[Đọc cấu trúc repo]
-    inspect_repo --> todo[Lập TODO cho dự án]
-    todo --> inspect_existing[Kiểm tra backend và frontend hiện có]
-    inspect_existing --> edit_files[Tạo hoặc sửa file cần thiết]
-    edit_files --> run_checks[Chạy install, test hoặc build]
-    run_checks --> has_error{Có lỗi?}
-    has_error -->|Có| read_error[Đọc error log]
-    read_error --> diagnose[Phân tích nguyên nhân]
-    diagnose --> patch_file[Sửa file liên quan]
-    patch_file --> run_checks
-    has_error -->|Không| summarize[Tóm tắt thay đổi]
-    summarize --> reusable{Quy trình tái sử dụng được?}
-    reusable -->|Có| save_learning[Lưu thành skill hoặc memory]
-    reusable -->|Không| finish([✅ Kết thúc])
-    save_learning --> finish
+    task([👤 Người dùng giao nhiệm vụ<br/>Input: prompt tạo MVP]) -->|bắt đầu phiên| read_rules[Đọc luật dự án<br/>Nguồn: SOUL.md + AGENTS.md<br/>Output: ràng buộc, stack, vùng cấm]
+    read_rules -->|đã biết luật| inspect_repo[Đọc cấu trúc repo<br/>Nguồn: file tree + README<br/>Output: backend/frontend hiện có]
+    inspect_repo -->|đã biết repo có gì| todo[Lập TODO ngắn<br/>Output: checklist backend, frontend, test]
+    todo -->|theo checklist| inspect_existing[Kiểm tra file hiện có<br/>Mục tiêu: tránh ghi đè sai<br/>Output: file cần tạo/sửa]
+    inspect_existing -->|đã chọn phạm vi sửa| edit_files[Tạo hoặc sửa file<br/>Backend: API + DB<br/>Frontend: form + list + summary]
+    edit_files -->|sau mỗi cụm thay đổi| run_checks[Chạy kiểm tra thật<br/>Lệnh: install/test/build/run<br/>Output: pass hoặc error log]
+    run_checks -->|đọc kết quả terminal| has_error{Có lỗi?}
+    has_error -->|Có lỗi| read_error[Đọc error log<br/>Tìm stack trace, file, dòng lỗi]
+    read_error -->|đã khoanh vùng| diagnose[Phân tích nguyên nhân<br/>Ví dụ: import sai, thiếu env, schema lệch]
+    diagnose -->|có hướng sửa| patch_file[Sửa file liên quan<br/>Giữ thay đổi nhỏ và đúng lỗi]
+    patch_file -->|kiểm chứng lại| run_checks
+    has_error -->|Không lỗi| summarize[Tóm tắt thay đổi<br/>File đã sửa + cách chạy local]
+    summarize -->|sau khi hoàn thành| reusable{Quy trình tái sử dụng được?}
+    reusable -->|Có| save_learning[Lưu bài học<br/>MEMORY.md hoặc draft SKILL.md]
+    reusable -->|Không| finish([✅ Kết thúc<br/>Trả kết quả cho người dùng])
+    save_learning -->|đã ghi nhớ| finish
 
     classDef decision fill:#fef9c3,stroke:#ca8a04,stroke-width:2px,color:#713f12
     classDef process fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a5f
@@ -578,6 +578,21 @@ flowchart TD
     class read_rules,inspect_repo,todo,inspect_existing,edit_files,run_checks,read_error,diagnose,patch_file,summarize,save_learning process
     class finish success
 ```
+
+### Cách đọc các ô và thanh nối trong luồng
+
+Mỗi ô trong sơ đồ có ba lớp thông tin: hành động Hermes đang làm, nguồn dữ liệu nó dựa vào, và đầu ra của bước đó. Ví dụ, ô `Đọc luật dự án` không chỉ là "đọc file"; nó lấy `SOUL.md` để biết phong cách/kỷ luật agent, lấy `AGENTS.md` để biết luật repo, rồi tạo ra bộ ràng buộc như stack, lệnh kiểm tra, vùng cấm xóa file hoặc push/deploy.
+
+Thanh nối giữa các ô cho biết điều kiện để đi tiếp. `sau mỗi cụm thay đổi` nghĩa là Hermes không đợi viết xong toàn bộ app mới test, mà sau khi hoàn thành một cụm backend hoặc frontend sẽ chạy kiểm tra. Nhánh `Có lỗi` đưa agent quay vào vòng đọc log → chẩn đoán → sửa file → chạy lại. Nhánh `Không lỗi` mới cho phép đi tới tóm tắt và học lại.
+
+| Ô trong luồng | Bên trong ô diễn ra gì | Khi nào đi tiếp? |
+| --- | --- | --- |
+| `Đọc luật dự án` | Load persona/rules, xác định tech stack, cách trả lời, lệnh kiểm tra, vùng cấm | Khi đã có đủ ràng buộc để không làm sai repo |
+| `Đọc cấu trúc repo` | Xem thư mục, file hiện có, README, backend/frontend đã scaffold chưa | Khi biết nên tạo mới hay sửa trên nền có sẵn |
+| `Lập TODO ngắn` | Chia MVP thành các việc nhỏ: API, DB, UI, build/test | Khi có checklist đủ để triển khai không bỏ sót |
+| `Tạo hoặc sửa file` | Viết code theo từng cụm nhỏ, tránh rewrite toàn bộ | Khi một cụm thay đổi có thể kiểm tra được |
+| `Chạy kiểm tra thật` | Chạy terminal/test/build/import check và đọc output | Nếu lỗi thì vào nhánh debug, nếu pass thì tóm tắt |
+| `Lưu bài học` | Chỉ ghi memory/skill khi có kinh nghiệm có thể tái sử dụng | Khi bài học đủ rõ và không phải mẹo vá tạm |
 
 ### Giải thích quy trình gỡ lỗi trong ví dụ
 
