@@ -953,7 +953,6 @@ Nói ngắn gọn:
 
 ## 🎬 Video minh họa
 
-<video src="./1783467104781_194601495714093349_803269642946430643.mp4" controls width="100%">
-  Trình duyệt của bạn không hỗ trợ phát video trực tiếp. Bạn có thể tải video tại đây:
-  <a href="./1783467104781_194601495714093349_803269642946430643.mp4">1783467104781_194601495714093349_803269642946430643.mp4</a>
-</video>
+GitHub README có thể không phát video trực tiếp bằng thẻ `<video>`. Bấm vào link dưới đây để xem hoặc tải video:
+
+[▶ Xem video minh họa](./1783467104781_194601495714093349_803269642946430643.mp4)
