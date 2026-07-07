@@ -460,7 +460,7 @@ flowchart TD
 
 ## 🔧 Ví dụ thực tế: dùng Hermes code một MVP nhỏ
 
-Ví dụ một app quản lý chi tiêu cá nhân cho sinh viên Việt Nam. Repo ban đầu có thể như sau:
+Ví dụ trong dữ liệu PDF là một app quản lý chi tiêu cá nhân cho sinh viên Việt Nam. Repo ban đầu có thể như sau:
 
 ```text
 personal-finance-app/
@@ -948,3 +948,12 @@ Nói ngắn gọn:
 - Chatbot thường: hỏi gì trả lời đó
 - AI Agent nói chung: có thể lập kế hoạch và dùng công cụ
 - Hermes Agent: có memory, skills, tools, cron, gateway, profile và learning loop để làm việc lâu dài
+
+---
+
+## 🎬 Video minh họa
+
+<video src="./1783467104781_194601495714093349_803269642946430643.mp4" controls width="100%">
+  Trình duyệt của bạn không hỗ trợ phát video trực tiếp. Bạn có thể tải video tại đây:
+  <a href="./1783467104781_194601495714093349_803269642946430643.mp4">1783467104781_194601495714093349_803269642946430643.mp4</a>
+</video>
