@@ -25,7 +25,7 @@ Hermes Agent là một framework AI Agent cụ thể của Nous Research. Nếu 
 
 ## ⚙️ Kiến trúc vận hành
 
-Hermes hoạt động như một hệ thống nhiều lớp. Người dùng giao nhiệm vụ; profile xác định môi trường làm việc; memory cung cấp thông tin đã nhớ; skills cung cấp quy trình đã học; tools giúp agent hành động; cron giúp chạy nhiệm vụ theo lịch; gateway giúp agent giao tiếp qua nhiều nền tảng.
+Hermes hoạt động như một hệ thống nhiều lớp. Ở giữa là `AIAgent`, vòng lặp điều phối chịu trách nhiệm chọn provider/model, dựng system prompt, đưa schema tool cho model, nhận tool call, chạy tool, retry/fallback, nén context và lưu session. Xung quanh vòng lặp này là 6 thành phần chính: profile xác định môi trường làm việc; memory cung cấp thông tin đã nhớ; skills cung cấp quy trình đã học; tools giúp agent hành động; cron giúp chạy nhiệm vụ theo lịch; gateway giúp agent giao tiếp qua nhiều nền tảng.
 
 ```mermaid
 flowchart LR
@@ -66,14 +66,14 @@ flowchart LR
 
 ### Các thành phần chính
 
-| Thành phần | Vai trò | Nói đơn giản |
+| Thành phần | Vai trò | Cơ chế thực tế |
 | --- | --- | --- |
-| **Memory** | Ghi nhớ thông tin quan trọng về người dùng, dự án, lỗi, môi trường | Nhớ "cái gì" |
-| **Skills** | Lưu quy trình làm việc thành hướng dẫn có thể tái sử dụng | Nhớ "làm như thế nào" |
-| **Tools** | Cho phép agent đọc/sửa file, chạy terminal, tìm web, dùng browser | Tay chân để hành động |
-| **Cron** | Chạy tác vụ định kỳ mà không cần nhắc lại | Đồng hồ báo thức |
-| **Gateway** | Kết nối Hermes với Telegram, Discord, Slack, Email và tool gateway | Cổng giao tiếp |
-| **Profile** | Tách nhiều agent theo mục đích, mỗi profile có memory/skills/session riêng | Nhiều bản Hermes riêng |
+| **Memory** | Ghi nhớ thông tin quan trọng về người dùng, dự án, lỗi, môi trường | Dùng bounded curated memory: `MEMORY.md` và `USER.md` được giới hạn dung lượng, inject vào system prompt đầu phiên; lịch sử dài nằm trong SQLite `state.db` và tìm lại bằng session search/FTS5 khi cần |
+| **Skills** | Lưu quy trình làm việc thành hướng dẫn có thể tái sử dụng | Lưu trong `~/.hermes/skills/` dạng `SKILL.md`, dùng progressive disclosure: chỉ xem danh sách/tóm tắt trước, khi khớp task mới `skill_view()` để nạp toàn bộ; skill tự sinh nên là draft và qua human review/curator trước khi dùng rộng |
+| **Tools** | Cho phép agent đọc/sửa file, chạy terminal, tìm web, dùng browser | Model chỉ tạo `tool_call`; Hermes runtime mới dispatch thật qua tool registry. Một số tool đặc biệt như todo, memory, session search, delegate task được agent loop xử lý trực tiếp vì cần state cấp agent |
+| **Cron** | Chạy tác vụ định kỳ mà không cần nhắc lại | Gateway daemon tick theo chu kỳ, đọc `~/.hermes/cron/jobs.json`, tạo fresh `AIAgent` session, inject skill nếu job yêu cầu, gửi output về target và cập nhật `next_run_at`; dùng lock để tránh tick trùng |
+| **Gateway** | Kết nối Hermes với Telegram, Discord, Slack, Email và tool gateway | Nhận tin từ nền tảng ngoài, chuyển vào `AIAgent`, áp dụng toolset phù hợp với từng platform, rồi gửi kết quả về đúng kênh gốc |
+| **Profile** | Tách nhiều agent theo mục đích, mỗi profile có memory/skills/session riêng | Mỗi profile có cấu hình, memory, skills, session và gateway state riêng; khi dựng prompt, Hermes còn đọc context files như `SOUL.md`, `AGENTS.md`, `CLAUDE.md`, `.cursorrules` theo priority và phát hiện thêm context ở thư mục con khi cần |
 
 ---
 
