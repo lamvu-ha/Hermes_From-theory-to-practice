@@ -531,6 +531,21 @@ Yêu cầu:
 - Sau khi code xong hãy chạy test/build để kiểm tra
 ```
 
+### Giải thích quy trình tạo MVP nhỏ
+
+Với yêu cầu tạo MVP, Hermes không nên nhảy thẳng vào viết code tất cả file một lúc. Nó xử lý theo một workflow giống một lập trình viên có kỷ luật:
+
+| Giai đoạn | Hermes làm gì | Kết quả mong muốn |
+| --- | --- | --- |
+| **1. Hiểu luật và phạm vi** | Load `SOUL.md`, đọc `AGENTS.md`, kiểm tra repo hiện có, xác định stack FastAPI + SQLite + React/Vite và các giới hạn như không deploy, không push tự động | Agent biết cần xây app nhỏ, chạy local, không phá cấu trúc repo |
+| **2. Lập kế hoạch MVP** | Chia yêu cầu thành backend, database, API, frontend, state UI và kiểm tra chạy được; tạo TODO ngắn để tránh bỏ sót luồng thêm/sửa/xóa giao dịch | Có checklist rõ ràng thay vì code theo cảm tính |
+| **3. Xây backend trước** | Tạo hoặc sửa `main.py`, `database.py`, `models.py`, `schemas.py`, `crud.py`, router giao dịch; đảm bảo API có các endpoint CRUD và tính tổng thu/chi/số dư nếu backend đảm nhiệm | Backend có cấu trúc đủ nhỏ nhưng rõ vai trò từng file |
+| **4. Xây frontend sau** | Tạo form nhập giao dịch, danh sách giao dịch, nút sửa/xóa, phần tổng hợp thu chi; kết nối API backend và xử lý trạng thái loading/error cơ bản | Người dùng có giao diện thao tác được, không chỉ có API |
+| **5. Kiểm tra bằng tool thật** | Chạy install, test, import check, backend server hoặc frontend build; đọc lỗi nếu có và sửa cho đến khi app chạy local | MVP được xác nhận bằng terminal/build thay vì chỉ nói "đã xong" |
+| **6. Tóm tắt và học lại** | Tóm tắt file đã tạo/sửa, cách chạy app, lỗi đã sửa; nếu có quy trình lặp lại, lưu vào `MEMORY.md` hoặc draft `SKILL.md` | Lần sau tạo app tương tự nhanh hơn và ít hỏi lại hơn |
+
+Ví dụ, nếu repo chưa có backend, Hermes có thể bắt đầu bằng một FastAPI app tối thiểu, SQLite local và router `/transactions`. Nếu frontend đã có Vite sẵn, nó không scaffold lại toàn bộ mà đọc cấu trúc hiện có rồi thêm component cần thiết. Đây là điểm quan trọng: Hermes vừa tạo sản phẩm, vừa kiểm soát phạm vi thay đổi.
+
 ### Luồng Hermes code dự án
 
 ```mermaid
