@@ -167,17 +167,20 @@ flowchart TD
     follow_process --> stable[✅ Nhanh và ổn định hơn]
     has_skill -->|Không| solve_from_scratch[Hermes tự xử lý từ đầu]
     solve_from_scratch --> reusable{Quy trình tái sử dụng được?}
-    reusable -->|Có| create_skill[Tạo skill mới]
+    reusable -->|Có| create_skill[Tạo draft SKILL.md]
     reusable -->|Không| finish_no_skill[Kết thúc không tạo skill]
-    create_skill --> next_time[Lần sau tái sử dụng]
+    create_skill --> review{Con người review?}
+    review -->|Đạt| approve[Approve skill]
+    review -->|Chưa đạt| revise[Sửa hoặc bỏ draft]
+    approve --> next_time[Lần sau tái sử dụng]
 
     classDef decision fill:#fef9c3,stroke:#ca8a04,stroke-width:2px,color:#713f12
     classDef success fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
     classDef process fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a5f
 
-    class has_skill,reusable decision
-    class stable,next_time success
-    class analyze,check_skill,load_skill,follow_process,solve_from_scratch,create_skill process
+    class has_skill,reusable,review decision
+    class stable,approve,next_time success
+    class analyze,check_skill,load_skill,follow_process,solve_from_scratch,create_skill,revise process
 ```
 
 ### Ví dụ skill sửa lỗi React
@@ -191,7 +194,7 @@ Khi Hermes nhiều lần sửa lỗi build trong dự án React, nó có thể r
 5. Chạy lại build
 6. Nếu còn lỗi thì lặp lại
 
-Sau đó Hermes có thể lưu thành skill. Lần sau gặp lỗi build React, agent tải skill đó thay vì mò lại từ đầu.
+Sau đó Hermes có thể lưu thành bản nháp skill. Khi con người review và approve, lần sau gặp lỗi build React, agent tải skill đó thay vì mò lại từ đầu.
 
 ---
 
@@ -686,6 +689,23 @@ Use this skill when creating a small full-stack MVP with FastAPI, SQLite, and Re
 ```
 
 Lần sau, khi người dùng nói "Tạo một app CRUD nhỏ bằng FastAPI + React giống lần trước", Hermes có thể tải skill liên quan, làm theo quy trình đã lưu và hoàn thành nhanh hơn.
+
+### Emergent skills và bước kiểm duyệt
+
+Điểm quan trọng của learning loop là Hermes không chỉ ghi nhớ kết quả, mà còn có thể tự sinh tài liệu hướng dẫn sau khi giải xong một bài toán khó. Những kỹ năng này thường được viết thành `SKILL.md` theo kiểu open standard như `agentskills.io`: có phần mô tả khi nào dùng skill, quy trình thao tác, ràng buộc, ví dụ và các điều không nên làm.
+
+Tuy nhiên, skill do AI tự sinh không nên được coi ngay là tri thức chính thức. Ở giai đoạn đầu, chúng nên được xem là `draft`: bản nháp cần con người đọc lại, sửa lại và approve trước khi cho phép agent tự động áp dụng trong các dự án production hoặc môi trường nhạy cảm.
+
+Lý do là agent có thể học lại cả kinh nghiệm đúng lẫn kinh nghiệm sai. Nếu một phiên trước xử lý được lỗi bằng cách vá tạm, bỏ qua test, hoặc áp dụng một giả định chỉ đúng trong bối cảnh hẹp, việc lưu nguyên quy trình đó thành skill có thể khiến Hermes "học vẹt" và lặp lại sai lầm ở dự án khác. Vì vậy, learning loop nên có lớp human-in-the-loop:
+
+| Giai đoạn | Vai trò của Hermes | Vai trò của con người |
+| --- | --- | --- |
+| Giải bài toán khó | Tìm cách xử lý, chạy kiểm tra, rút kinh nghiệm | Quan sát kết quả và yêu cầu giải thích nếu cần |
+| Tạo skill | Viết draft `SKILL.md` từ quy trình đã dùng | Kiểm tra giả định, phạm vi áp dụng và rủi ro |
+| Duyệt skill | Đề xuất lưu vào thư mục skills | Approve, sửa, hoặc loại bỏ bản nháp |
+| Tái sử dụng | Chỉ tải skill đã được duyệt khi nhiệm vụ phù hợp | Theo dõi các lần áp dụng để cải thiện tiếp |
+
+Nói ngắn gọn: khả năng tự sinh skill giúp Hermes học nhanh hơn, nhưng bước kiểm duyệt giúp hệ thống không biến lỗi cũ thành "kinh nghiệm" chính thức.
 
 ---
 
