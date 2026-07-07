@@ -123,11 +123,31 @@ Trong luồng này, `SOUL.md` không phải một phần phụ tách riêng bên
 
 Vì vậy, nếu chỉ mô tả `MEMORY.md` và `USER.md`, bức tranh về kiểm soát hành vi dài hạn của Hermes sẽ thiếu một chân kiềng quan trọng. Với từng profile hoặc subagent, `SOUL.md` có thể khác nhau để tạo ra hành vi chuyên biệt: coder agent cần kỷ luật kiểm thử và đọc code trước khi sửa; research agent cần thói quen trích nguồn và phân biệt giả định; personal assistant cần ưu tiên ngữ cảnh người dùng và cách giao tiếp quen thuộc.
 
+### Cơ chế hoạt động
+
+`MEMORY.md` lưu ghi chú của agent về môi trường, project, workflow, lỗi đã gặp và bài học đã học. `USER.md` lưu thông tin về người dùng như preference, cách giao tiếp, thói quen làm việc và format trả lời quen thuộc. Hai file này không được để phình vô hạn: `MEMORY.md` thường bị giới hạn khoảng 2.200 ký tự, còn `USER.md` khoảng 1.375 ký tự, rồi được inject vào system prompt khi session bắt đầu.
+
+Thiết kế này có ba ý quan trọng. Một là memory được đưa vào prompt ở đầu phiên, nên model luôn thấy những thông tin quan trọng nhất mà không cần tìm lại. Hai là memory có giới hạn ký tự; khi đầy, tool có thể trả lỗi và agent phải tự gộp, nén hoặc xóa thông tin cũ, tránh tình trạng "memory càng lâu càng loạn". Ba là memory không thay đổi ngay trong system prompt giữa phiên: nếu agent lưu memory mới, nội dung được ghi xuống file ngay, nhưng thường chỉ xuất hiện trong prompt từ session sau. Cách này giữ prompt ổn định và tận dụng prompt caching tốt hơn.
+
+Ngoài memory ngắn, Hermes còn có session search. Toàn bộ session CLI hoặc messaging có thể được lưu vào SQLite `~/.hermes/state.db` và tìm bằng FTS5 full-text search. Khi cần nhớ một việc đã nói từ vài tuần trước, agent không nhét toàn bộ lịch sử vào prompt, mà gọi `session_search`, lấy đoạn liên quan, rồi dùng đoạn đó trong câu trả lời.
+
 ---
 
 ## 📚 Skills: học và tái sử dụng quy trình
 
 Skills giúp Hermes biến kinh nghiệm thành quy trình có thể dùng lại. Nếu memory nhớ thông tin, skills nhớ cách làm. Một skill thường là file hướng dẫn như `SKILL.md`, chỉ được tải khi nhiệm vụ liên quan.
+
+### Cơ chế hoạt động
+
+Skills thường được lưu ở `~/.hermes/skills/`, mỗi skill là một thư mục hoặc tài liệu có `SKILL.md` chứa metadata, mô tả khi nào dùng, quy trình thao tác, ràng buộc và ví dụ. Điểm quan trọng là Hermes không nạp toàn bộ nội dung skills vào prompt ngay từ đầu. Nó dùng progressive disclosure để tiết kiệm token:
+
+| Cấp | Cơ chế | Nội dung agent thấy |
+| --- | --- | --- |
+| Level 0 | `skills_list()` | Tên skill và mô tả ngắn |
+| Level 1 | `skill_view(name)` | Toàn bộ `SKILL.md` |
+| Level 2 | `skill_view(name, path)` | File phụ như template, script, reference |
+
+Nhờ vậy, agent chỉ load skill đầy đủ khi task thật sự khớp. Khi hoàn thành một nhiệm vụ phức tạp, gặp lỗi rồi tìm ra cách đúng, hoặc được người dùng sửa cách làm, Hermes có thể dùng `skill_manage` để tạo, patch, edit, delete, `write_file` hoặc `remove_file` trong skill. Nhưng skill tự sinh ban đầu nên là draft; curator hoặc con người cần review để tránh lưu nhầm quy trình vá tạm thành kinh nghiệm chính thức.
 
 ```mermaid
 flowchart TD
@@ -176,6 +196,29 @@ Sau đó Hermes có thể lưu thành bản nháp skill. Khi con người review
 ## 🔧 Tools: biến suy nghĩ thành hành động
 
 LLM không tự chạy lệnh. Nó chỉ quyết định nên gọi công cụ nào. Hermes runtime nhận `tool_call`, chọn tool phù hợp, thực thi hành động thật rồi trả kết quả lại cho mô hình.
+
+### Cơ chế hoạt động
+
+Tools là các hàm thật mà agent có thể gọi, ví dụ web search, terminal, file edit, browser, memory, session search, cron, delegation hoặc MCP integrations. Hermes tổ chức tools thành các toolset để bật/tắt theo môi trường. CLI có thể cho phép terminal và file tool rộng hơn; Telegram, Discord hoặc Slack có thể bị giới hạn để tránh hành động nguy hiểm từ kênh chat.
+
+Luồng dispatch thường đi như sau:
+
+```text
+Model tạo tool_call
+   ↓
+run_agent.py nhận tool_call
+   ↓
+model_tools.handle_function_call()
+   ↓
+Nếu là tool đặc biệt: todo / memory / session_search / delegate_task
+   → agent loop xử lý trực tiếp vì cần state cấp agent
+Nếu là tool thường:
+   → registry.dispatch()
+   → chạy handler thật
+   → trả JSON/string result về model
+```
+
+Điểm cần nhớ: model chỉ đề xuất gọi tool theo schema. Phần runtime mới là nơi thực sự đọc file, sửa file, chạy command, mở browser hoặc lưu memory. Vì vậy, tool system là lớp biến suy nghĩ của LLM thành hành động có kiểm soát.
 
 ```mermaid
 flowchart TD
@@ -237,6 +280,30 @@ Hermes có thể xử lý theo chuỗi:
 
 Cron giúp Hermes thực hiện nhiệm vụ định kỳ mà không cần người dùng nhắc lại. Ví dụ: "Mỗi sáng lúc 9 giờ, hãy tìm tin tức AI mới và gửi tóm tắt cho tôi."
 
+### Cơ chế hoạt động
+
+Cron chạy trong gateway daemon. Job có thể là tác vụ một lần hoặc lặp lại, có prompt, lịch chạy, target gửi kết quả và có thể gắn skill vào job. Cơ chế chạy thường là:
+
+```text
+Gateway daemon tick mỗi 60 giây
+   ↓
+Đọc ~/.hermes/cron/jobs.json
+   ↓
+Kiểm tra job nào đến giờ chạy
+   ↓
+Tạo fresh AIAgent session
+   ↓
+Inject skill nếu job có skill
+   ↓
+Chạy prompt tới khi hoàn thành
+   ↓
+Gửi output về target
+   ↓
+Cập nhật next_run_at
+```
+
+Để tránh scheduler bị chạy trùng, Hermes có thể dùng lock file như `~/.hermes/cron/.tick.lock`. Cron session cũng nên bị giới hạn quyền tạo cron job mới bên trong cron, nếu không agent có thể vô tình tạo vòng lặp scheduling ngoài ý muốn.
+
 ```mermaid
 flowchart TD
     accTitle: Hermes Cron Job Flow
@@ -277,6 +344,12 @@ flowchart TD
 ## 🌐 Gateway: kết nối nhiều nền tảng
 
 Gateway là lớp trung gian giúp Hermes nhận tin nhắn từ nền tảng bên ngoài, chuyển vào Hermes xử lý, rồi gửi kết quả trả lại đúng nơi người dùng đã gửi yêu cầu.
+
+### Cơ chế hoạt động
+
+Messaging gateway nhận event từ Telegram, Discord, Slack, WhatsApp hoặc Email, chuẩn hóa thành request cho `AIAgent`, rồi gửi câu trả lời về đúng thread, chat hoặc email gốc. Gateway cũng quyết định toolset nào được phép dùng trên từng platform. Ví dụ, một CLI session có thể bật terminal/file tool, còn một bot Telegram nên hạn chế lệnh hệ thống hoặc thao tác file nhạy cảm.
+
+Tool gateway là lớp kết nối với dịch vụ bên ngoài như web search, browser automation, image generation hoặc text-to-speech. Nói ngắn gọn, messaging gateway đưa yêu cầu vào Hermes và trả kết quả ra ngoài; tool gateway giúp Hermes gọi các năng lực bên ngoài trong lúc xử lý.
 
 Có hai kiểu gateway quan trọng:
 
@@ -329,6 +402,23 @@ Luồng xử lý:
 ## 👤 Profile: tách agent theo mục đích
 
 Profile cho phép tạo nhiều môi trường Hermes khác nhau trên cùng một máy. Mỗi profile có cấu hình, memory, skills, session, cron jobs và trạng thái gateway riêng.
+
+### Cơ chế hoạt động
+
+Profile tách các không gian làm việc để memory, skills, session và cron job không bị trộn giữa các mục đích khác nhau. Một profile `coder` có thể ưu tiên repo, test và quy tắc code; profile `research` ưu tiên nguồn học thuật; profile `personal` ưu tiên lịch cá nhân và cách giao tiếp.
+
+Khi dựng prompt, Hermes còn đọc context files để hiểu project hiện tại. Các file thường gặp gồm:
+
+```text
+.hermes.md / HERMES.md
+AGENTS.md
+CLAUDE.md
+.cursorrules
+.cursor/rules/*.mdc
+SOUL.md
+```
+
+`SOUL.md` là identity/personality toàn cục của Hermes instance và thường được load riêng. Context theo project có thể có priority như `.hermes.md` → `AGENTS.md` → `CLAUDE.md` → `.cursorrules`, để tránh nhét nhiều bộ luật mâu thuẫn vào cùng prompt. Hermes cũng có thể dùng progressive subdirectory discovery: khi agent đi vào thư mục con như `backend/` hoặc `frontend/`, nó mới phát hiện context file riêng trong thư mục đó. Cách này giúp prompt không phình ngay từ đầu và vẫn giữ được hướng dẫn chuyên biệt theo vùng code.
 
 ```mermaid
 flowchart TD
